@@ -20,8 +20,7 @@ def create_payment_plan(accounts, paychecks):
         
         for account in sorted_accounts:
             if account.balance > 0:
-                payment_amount = min(account.min_payment, payment_plan['funds_available'])
-                payment_amount = min(payment_amount, account.balance)
+                payment_amount = min(account.min_payment, payment_plan['funds_available'], account.balance)
                 new_balance = max(account.balance - payment_amount, 0)
                 
                 payment_plan['payments'].append({
@@ -73,7 +72,7 @@ def main():
     for index, plan in enumerate(payment_plans):
         print("\nPayment Plan for Month {}".format(index + 1))
         print("-" * 50)
-        print("{}/{} |  (${:.2f})".format(plan['date'], plan['date'], plan['funds_available']))
+        print("Paycheck Date: {} |  (${:.2f})".format(plan['date'], plan['funds_available']))
         print("   Accounts to Pay    |   Payment Amount    |   New Balance:")
         
         for payment in plan['payments']:
