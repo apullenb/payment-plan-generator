@@ -5,7 +5,7 @@ class CreditAccount:
         self.min_payment = min_payment
 
 
-def create_payment_plan(accounts, paychecks, funds_per_paycheck):
+def create_payment_plan(accounts, paychecks):
     payment_plans = []
     
     for index, paycheck in enumerate(paychecks):
@@ -15,7 +15,10 @@ def create_payment_plan(accounts, paychecks, funds_per_paycheck):
             'payments': []
         }
         
-        for account in accounts:
+        # Sort accounts by balance (debt snowball method)
+        sorted_accounts = sorted(accounts, key=lambda account: account.balance, reverse=True)
+        
+        for account in sorted_accounts:
             if account.balance > 0:
                 payment_amount = min(account.min_payment, payment_plan['funds_available'])
                 payment_amount = min(payment_amount, account.balance)
@@ -64,25 +67,20 @@ def main():
         accounts.append(account)
     
     # Generate payment plans
-    payment_plans = create_payment_plan(accounts, paychecks, num_paychecks)
+    payment_plans = create_payment_plan(accounts, paychecks)
     
     # Print payment plans
     for index, plan in enumerate(payment_plans):
         print("\nPayment Plan for Month {}".format(index + 1))
         print("-" * 50)
-        print("{}/ 15th |  (${:.2f})".format(plan['date'], plan['funds_available']))
-        print("   Accounts to Pay    |   Payment Amount:")
+        print("{}/{} |  (${:.2f})".format(plan['date'], plan['date'], plan['funds_available']))
+        print("   Accounts to Pay    |   Payment Amount    |   New Balance:")
         
         for payment in plan['payments']:
-            print("       *{:<15} ${:.2f}".format(payment['account_name'], payment['payment_amount']))
-        
-        print("\n{}/ 30th  |  (${:.2f})".format(plan['date'], plan['funds_available']))
-        print("   Accounts to Pay    |   Payment Amount:")
-        
-        for payment in plan['payments']:
-            print("       *{:<15} ${:.2f}   |   New Balance: ${:.2f}".format(payment['account_name'], 
-                                                                            payment['payment_amount'], 
-                                                                            payment['new_balance']))
+            print("       *{:<15} ${:<15.2f}   ${:.2f}".format(payment['account_name'], 
+                                                              payment['payment_amount'], 
+                                                              payment['new_balance']))
+        print()
 
 
 if __name__ == "__main__":
