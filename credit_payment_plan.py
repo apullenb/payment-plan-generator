@@ -5,29 +5,20 @@ class CreditAccount:
         self.min_payment = min_payment
 
 
-def create_payment_plan(accounts, num_paychecks, funds_per_paycheck):
+def create_payment_plan(accounts, paychecks, funds_per_paycheck):
     payment_plans = []
-    total_funds_available = 0
     
-    for _ in range(num_paychecks):
+    for index, paycheck in enumerate(paychecks):
         payment_plan = {
-            'date': '',
-            'funds_available': total_funds_available,
+            'date': paycheck['date'],
+            'funds_available': paycheck['amount'],
             'payments': []
         }
         
-        # Calculate available funds per payment period
-        funds_per_period = funds_per_paycheck
-        
-        # Add remaining funds from the previous month
-        funds_per_period += total_funds_available
-        
-        # Reset total funds available for the current month
-        total_funds_available = 0
-        
         for account in accounts:
             if account.balance > 0:
-                payment_amount = min(account.min_payment, funds_per_period)
+                payment_amount = min(account.min_payment, payment_plan['funds_available'])
+                payment_amount = min(payment_amount, account.balance)
                 new_balance = max(account.balance - payment_amount, 0)
                 
                 payment_plan['payments'].append({
@@ -36,12 +27,9 @@ def create_payment_plan(accounts, num_paychecks, funds_per_paycheck):
                     'new_balance': new_balance
                 })
                 
-                funds_per_period -= payment_amount
-                total_funds_available += payment_amount
-                
+                payment_plan['funds_available'] -= payment_amount
                 account.balance = new_balance
         
-        payment_plan['funds_available'] += funds_per_period
         payment_plans.append(payment_plan)
     
     return payment_plans
@@ -50,8 +38,18 @@ def create_payment_plan(accounts, num_paychecks, funds_per_paycheck):
 def main():
     # Get user inputs
     accounts = []
+    paychecks = []
+    
     num_paychecks = int(input("Enter the number of paychecks per month: "))
-    funds_per_paycheck = float(input("Enter the available funds per paycheck: $"))
+    for i in range(num_paychecks):
+        paycheck_date = input("Enter the date of paycheck {}: ".format(i + 1))
+        paycheck_amount = float(input("Enter the available funds for paycheck {}: $".format(i + 1)))
+        
+        paycheck = {
+            'date': paycheck_date,
+            'amount': paycheck_amount
+        }
+        paychecks.append(paycheck)
     
     while True:
         account_name = input("Enter the account name (or 'done' to finish): ")
@@ -66,7 +64,7 @@ def main():
         accounts.append(account)
     
     # Generate payment plans
-    payment_plans = create_payment_plan(accounts, num_paychecks, funds_per_paycheck)
+    payment_plans = create_payment_plan(accounts, paychecks, num_paychecks)
     
     # Print payment plans
     for index, plan in enumerate(payment_plans):
