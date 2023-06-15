@@ -1,26 +1,23 @@
+
 def calculate_debt_payoff(debts, available_funds):
     total_debt = sum(debt['balance'] for debt in debts)
     monthly_payments = []
+    paycheck_number = 1
 
     while total_debt > 0:
-        minimum_payment_sum = sum(debt['minimum_payment'] for debt in debts if debt['balance'] > 0)
-        extra_payment = available_funds - minimum_payment_sum
-        if extra_payment < 0:
-            return False, monthly_payments, abs(extra_payment)
-
-        debts_sorted = sorted(debts, key=lambda x: x['balance'])
         monthly_payment = 0
         deficit = 0
 
-        for debt in debts_sorted:
+        print(f"\nPaycheck {paycheck_number}:")
+        for debt in debts:
             if debt['balance'] > 0:
-                payment = min(debt['balance'], debt['minimum_payment'] + extra_payment)
+                payment = min(debt['balance'], max(debt['minimum_payment'], available_funds))
+                monthly_payment += payment
                 debt['balance'] -= payment
                 total_debt -= payment
-                monthly_payment += payment
 
-                if payment > debt['minimum_payment']:
-                    deficit = payment - debt['minimum_payment']
+                if monthly_payment > available_funds:
+                    deficit = monthly_payment - available_funds
 
                 print(f"{debt['account_name']}: Pay ${payment:.2f}, New Balance: ${debt['balance']:.2f}")
 
@@ -28,12 +25,13 @@ def calculate_debt_payoff(debts, available_funds):
             print(f"Deficit: ${deficit:.2f}")
 
         monthly_payments.append(monthly_payment)
+        paycheck_number += 1
 
     return True, monthly_payments, 0
 
 
 def display_debt_details(debts):
-    print("Current Debts:")
+    print("\nCurrent Debts:")
     for debt in debts:
         print(f"{debt['account_name']}: ${debt['balance']:.2f}")
 
@@ -52,7 +50,7 @@ def edit_account(debts):
     print("Account not found.")
 
 
-def edit_paycheck_amount(available_funds):
+def edit_paycheck_amount():
     new_amount = float(input("Enter the new amount of funds available per paycheck: "))
     return new_amount
 
@@ -90,7 +88,7 @@ def main():
     available_funds = float(input("Enter the amount of funds available per paycheck: "))
 
     # Calculate debt payoff plan
-    success, monthly_payments, deficit = calculate_debt_payoff(debts, available_funds)
+    success, monthly_payments, _ = calculate_debt_payoff(debts, available_funds)
 
     # Display debt payoff plan
     if success:
@@ -107,11 +105,11 @@ def main():
 
             if choice == "1":
                 edit_account(debts)
-                success, monthly_payments, deficit = calculate_debt_payoff(debts, available_funds)
+                success, monthly_payments, _ = calculate_debt_payoff(debts, available_funds)
                 display_debt_details(debts)
             elif choice == "2":
-                available_funds = edit_paycheck_amount(available_funds)
-                success, monthly_payments, deficit = calculate_debt_payoff(debts, available_funds)
+                available_funds = edit_paycheck_amount()
+                success, monthly_payments, _ = calculate_debt_payoff(debts, available_funds)
                 display_debt_details(debts)
             elif choice == "3":
                 break
@@ -122,7 +120,6 @@ def main():
 
     else:
         print("\nError: Not enough available funds.")
-        print(f"Deficit: ${deficit:.2f} per paycheck.")
 
 
 if __name__ == '__main__':
