@@ -6,7 +6,7 @@ def calculate_debt_payoff(debts, available_funds):
         monthly_payment = 0
         for debt in debts:
             if debt['balance'] > 0:
-                payment = min(debt['balance'], debt['minimum_payment'])
+                payment = min(debt['balance'], max(debt['minimum_payment'], available_funds))
                 monthly_payment += payment
                 debt['balance'] -= payment
                 total_debt -= payment
@@ -17,6 +17,12 @@ def calculate_debt_payoff(debts, available_funds):
         monthly_payments.append(monthly_payment)
 
     return True, monthly_payments, 0
+
+
+def display_debt_details(debts):
+    print("Current Debts:")
+    for debt in debts:
+        print(f"{debt['account_name']}: ${debt['balance']:.2f}")
 
 
 def main():
@@ -57,13 +63,20 @@ def main():
     # Display debt payoff plan
     if success:
         print("\nDebt Payoff Plan:")
+        display_debt_details(debts)
+        print()
         for i, payment in enumerate(monthly_payments, start=1):
             print(f"Month {i}: Pay ${payment:.2f} towards each account")
+            for debt in debts:
+                print(f"New balance for {debt['account_name']}: ${debt['balance']:.2f}")
+            print()
     else:
-        print(f"\nError: Insufficient funds! You are short of ${deficit:.2f} each month.")
+        print("\nError: Not enough available funds.")
+        print(f"Deficit: ${abs(deficit):.2f} per paycheck.")
 
     print("\nDebt has been fully paid off!")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
+
