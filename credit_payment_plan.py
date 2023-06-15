@@ -1,85 +1,68 @@
-class CreditAccount:
-    def __init__(self, name, balance, min_payment):
-        self.name = name
-        self.balance = balance
-        self.min_payment = min_payment
+def calculate_debt_payoff(debts, available_funds):
+    total_debt = sum(debt['balance'] for debt in debts)
+    monthly_payments = []
 
+    while total_debt > 0:
+        monthly_payment = 0
+        for debt in debts:
+            if debt['balance'] > 0:
+                payment = min(debt['balance'], debt['minimum_payment'])
+                monthly_payment += payment
+                debt['balance'] -= payment
+                total_debt -= payment
 
-def create_payment_plan(accounts, paychecks):
-    payment_plans = []
-    
-    for index, paycheck in enumerate(paychecks):
-        payment_plan = {
-            'date': paycheck['date'],
-            'funds_available': paycheck['amount'],
-            'payments': []
-        }
-        
-        # Sort accounts by balance (debt snowball method)
-        sorted_accounts = sorted(accounts, key=lambda account: account.balance, reverse=True)
-        
-        for account in sorted_accounts:
-            if account.balance > 0:
-                payment_amount = min(account.min_payment, payment_plan['funds_available'], account.balance)
-                new_balance = max(account.balance - payment_amount, 0)
-                
-                payment_plan['payments'].append({
-                    'account_name': account.name,
-                    'payment_amount': payment_amount,
-                    'new_balance': new_balance
-                })
-                
-                payment_plan['funds_available'] -= payment_amount
-                account.balance = new_balance
-        
-        payment_plans.append(payment_plan)
-    
-    return payment_plans
+        if monthly_payment > available_funds:
+            return False, monthly_payments, available_funds - monthly_payment
+
+        monthly_payments.append(monthly_payment)
+
+    return True, monthly_payments, 0
 
 
 def main():
-    # Get user inputs
-    accounts = []
-    paychecks = []
-    
-    num_paychecks = int(input("Enter the number of paychecks per month: "))
-    for i in range(num_paychecks):
-        paycheck_date = input("Enter the date of paycheck {}: ".format(i + 1))
-        paycheck_amount = float(input("Enter the available funds for paycheck {}: $".format(i + 1)))
-        
-        paycheck = {
-            'date': paycheck_date,
-            'amount': paycheck_amount
-        }
-        paychecks.append(paycheck)
-    
+    print("Debt Snowball Payoff Plan\n")
+
+    # Prompt for paycheck frequency
+    paycheck_frequency = input("Enter your paycheck frequency (e.g., monthly, bi-weekly, weekly): ")
+
+    # Prompt for interest rate consideration
+    consider_interest = input("Do you want to consider interest rates? (yes/no): ")
+
+    interest_rate = 0  # Default interest rate
+    if consider_interest.lower() == "yes":
+        custom_interest = input("Do you want to enter a custom interest rate for each account? (yes/no): ")
+        if custom_interest.lower() == "yes":
+            interest_rate = float(input("Enter the custom interest rate (as a decimal): "))
+
+    # Prompt for debt details
+    debts = []
     while True:
         account_name = input("Enter the account name (or 'done' to finish): ")
-        
-        if account_name.lower() == 'done':
+        if account_name.lower() == "done":
             break
-        
-        balance = float(input("Enter the balance owed for {}: $".format(account_name)))
-        min_payment = float(input("Enter the minimum payment required for {}: $".format(account_name)))
-        
-        account = CreditAccount(account_name, balance, min_payment)
-        accounts.append(account)
-    
-    # Generate payment plans
-    payment_plans = create_payment_plan(accounts, paychecks)
-    
-    # Print payment plans
-    for index, plan in enumerate(payment_plans):
-        print("\nPayment Plan for Month {}".format(index + 1))
-        print("-" * 50)
-        print("Paycheck Date: {} |  (${:.2f})".format(plan['date'], plan['funds_available']))
-        print("   Accounts to Pay    |   Payment Amount    |   New Balance:")
-        
-        for payment in plan['payments']:
-            print("       *{:<15} ${:<15.2f}   ${:.2f}".format(payment['account_name'], 
-                                                              payment['payment_amount'], 
-                                                              payment['new_balance']))
-        print()
+
+        balance = float(input("Enter the total balance owed: "))
+        minimum_payment = float(input("Enter the minimum payment amount: "))
+        interest = interest_rate if consider_interest.lower() == "yes" else 0
+
+        debt = {'account_name': account_name, 'balance': balance, 'minimum_payment': minimum_payment, 'interest': interest}
+        debts.append(debt)
+
+    # Prompt for available funds per paycheck
+    available_funds = float(input("Enter the amount of funds available per paycheck: "))
+
+    # Calculate debt payoff plan
+    success, monthly_payments, deficit = calculate_debt_payoff(debts, available_funds)
+
+    # Display debt payoff plan
+    if success:
+        print("\nDebt Payoff Plan:")
+        for i, payment in enumerate(monthly_payments, start=1):
+            print(f"Month {i}: Pay ${payment:.2f} towards each account")
+    else:
+        print(f"\nError: Insufficient funds! You are short of ${deficit:.2f} each month.")
+
+    print("\nDebt has been fully paid off!")
 
 
 if __name__ == "__main__":
